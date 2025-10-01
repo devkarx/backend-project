@@ -15,7 +15,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     // check for user creation
     // return res
     const {fullName, email, username, password } = req.body
-    console.log(req.body);
+    // console.log(req.body);
     if(
         [fullName, email, username, password].some((field) =>{
             return field?.trim() ==="";
@@ -24,7 +24,7 @@ const registerUser = asyncHandler(async (req,res)=>{
         ApiError(404, "All fields are required");
     }
 
-    const existedUser= User.findOne({
+    const existedUser= await User.findOne({
         $or: [{username}, {email}]
     })
 
@@ -33,7 +33,13 @@ const registerUser = asyncHandler(async (req,res)=>{
     }
     console.log(req.files);
     const avatarLocalPath= req.files?.avatar[0]?.path;
-    const coverImageLocalPath= req.files?.coverImage[0]?.path;
+    // console.log(req.files);
+    // const coverImageLocalPath= req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length >0 ) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is required");
     }
@@ -53,7 +59,7 @@ const registerUser = asyncHandler(async (req,res)=>{
         username: username.toLowerCase()
     })
     //finding the user by ID and then removing password and refreshtoken in res, select by default selects all 
-    const createdUser=  await User.findById(_id).select(
+    const createdUser=  await User.findById(user._id).select(
         "-password -refreshToken"
     )
     if(!createdUser){
